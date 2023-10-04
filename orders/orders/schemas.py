@@ -7,7 +7,6 @@ class OrderDetailSchema(Schema):
     price = fields.Decimal(as_string=True)
     quantity = fields.Int()
 
-
 class OrderSchema(Schema):
     id = fields.Int(required=True)
     order_details = fields.Nested(OrderDetailSchema, many=True)

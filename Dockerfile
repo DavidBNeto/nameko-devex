@@ -1,4 +1,4 @@
-FROM python:3.7-slim-stretch as base
+FROM python:3.7-slim-stretch AS base
 
 RUN apt-get update && \
     apt-get install --yes curl netcat
@@ -16,7 +16,7 @@ RUN mkdir /var/nameko/ && chown -R nameko:nameko /var/nameko/
 
 # ------------------------------------------------------------------------
 
-FROM nameko-example-base as builder
+FROM nameko-example-base AS builder
 
 RUN apt-get update && \
     apt-get install --yes build-essential autoconf libtool pkg-config \

@@ -41,7 +41,11 @@ def upgrade():
         ),
     )
 
+    op.create_index("order_details_fkey", "order_details", "order_id")
+    op.create_index("order_details_product_id", "order_details", "product_id")
 
 def downgrade():
     op.drop_table("order_details")
     op.drop_table("orders")
+    op.drop_index("order_details_fkey")
+    op.drop_index("order_details_product_id")

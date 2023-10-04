@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import (
-    DECIMAL, Column, DateTime, ForeignKey, Integer,
+    DECIMAL, Column, DateTime, ForeignKey, Integer, Index, Row
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -37,9 +37,13 @@ class OrderDetail(DeclarativeBase):
     order_id = Column(
         Integer,
         ForeignKey("orders.id", name="fk_order_details_orders"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     order = relationship(Order, backref="order_details")
     product_id = Column(Integer, nullable=False)
     price = Column(DECIMAL(18, 2), nullable=False)
     quantity = Column(Integer, nullable=False)
+
+    order_id_index = Index("order_details_fkey", order_id)
+    product_id_index = Index("order_details_product_id", product_id)

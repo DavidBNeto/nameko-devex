@@ -2,20 +2,18 @@ import pytest
 import redis
 
 from nameko import config
-from products.dependencies import REDIS_URI_KEY
+from products.dependencies import PROVIDED_HOST
 
 
 @pytest.fixture
 def test_config(rabbit_config):
-    with config.patch(
-        {REDIS_URI_KEY: 'redis://localhost:6379/11'}
-    ):
+    with config.patch({PROVIDED_HOST: 'redis://:password@localhost:6379/7'}):
         yield
 
 
 @pytest.yield_fixture
 def redis_client(test_config):
-    client = redis.StrictRedis.from_url(config.get(REDIS_URI_KEY))
+    client = redis.StrictRedis(port=6379, db=7, password="password")
     yield client
     client.flushdb()
 

@@ -21,6 +21,7 @@
 import pytest
 from collections import namedtuple
 
+from mock.mock import Mock
 from nameko import config
 from nameko.testing.services import replace_dependencies
 
@@ -77,7 +78,8 @@ def create_service_meta(container_factory, test_config):
 
 
 @pytest.fixture
-def gateway_service(create_service_meta):
-    """ Gateway service test instance with mocked `products_rpc` and
-    `orders_rpc` dependencies """
-    return create_service_meta('products_rpc', 'orders_rpc')
+def service(test_config):
+    service = GatewayService()
+    service.products_rpc = Mock()
+    service.orders_rpc = Mock()
+    return service

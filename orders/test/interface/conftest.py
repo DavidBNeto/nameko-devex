@@ -21,6 +21,7 @@
 import pytest
 from collections import namedtuple
 
+from mock.mock import Mock
 from nameko import config
 from nameko.standalone.rpc import ServiceRpcProxy
 from nameko.testing.services import replace_dependencies
@@ -83,7 +84,5 @@ def orders_service(create_service_meta):
 
 
 @pytest.fixture
-def orders_rpc(orders_service):
-    """ Fixture used for triggering real RPC entrypoints on Orders service """
-    with ServiceRpcProxy('orders') as proxy:
-        yield proxy
+def orders_rpc(test_config):
+    return OrdersService()

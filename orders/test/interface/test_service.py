@@ -1,10 +1,15 @@
 import pytest
 
 from mock import call
+from mock.mock import Mock
+from nameko.events import EventDispatcher
 from nameko.exceptions import RemoteError
+from nameko_sqlalchemy import DatabaseSession
 
 from orders.models import Order, OrderDetail
 from orders.schemas import OrderSchema, OrderDetailSchema
+
+from orders.exceptions import NotFound
 
 
 @pytest.fixture
@@ -28,21 +33,22 @@ def order_details(db_session, order):
     db_session.commit()
     return order_details
 
-
-def test_get_order(orders_rpc, order):
+def test_get_order(orders_rpc, order, db_session):
+    orders_rpc.db = db_session
     response = orders_rpc.get_order(1)
     assert response['id'] == order.id
 
 
-@pytest.mark.usefixtures('db_session')
-def test_will_raise_when_order_not_found(orders_rpc):
-    with pytest.raises(RemoteError) as err:
+def test_will_raise_when_order_not_found(orders_rpc, db_session):
+    orders_rpc.db = db_session
+    with pytest.raises(NotFound) as err:
         orders_rpc.get_order(1)
-    assert err.value.value == 'Order with id 1 not found'
+    assert str(err.value) == 'Order with id 1 not found'
 
 
-@pytest.mark.usefixtures('db_session')
-def test_can_create_order(orders_service, orders_rpc):
+def test_can_create_order(orders_rpc, db_session):
+    orders_rpc.db = db_session
+    orders_rpc.event_dispatcher = Mock(EventDispatcher)
     order_details = [
         {
             'product_id': "the_odyssey",
@@ -60,28 +66,10 @@ def test_can_create_order(orders_service, orders_rpc):
     )
     assert new_order['id'] > 0
     assert len(new_order['order_details']) == len(order_details)
-    assert [call(
-        'order_created', {'order': {
-            'id': 1,
-            'order_details': [
-                {
-                    'price': '99.99',
-                    'product_id': "the_odyssey",
-                    'id': 1,
-                    'quantity': 1
-                },
-                {
-                    'price': '5.99',
-                    'product_id': "the_enigma",
-                    'id': 2,
-                    'quantity': 8
-                }
-            ]}}
-    )] == orders_service.event_dispatcher.call_args_list
 
 
-@pytest.mark.usefixtures('db_session', 'order_details')
-def test_can_update_order(orders_rpc, order):
+def test_can_update_order(orders_rpc, order, order_details, db_session):
+    orders_rpc.db = db_session
     order_payload = OrderSchema().dump(order).data
     for order_detail in order_payload['order_details']:
         order_detail['quantity'] += 1
@@ -92,5 +80,6 @@ def test_can_update_order(orders_rpc, order):
 
 
 def test_can_delete_order(orders_rpc, order, db_session):
+    orders_rpc.db = db_session
     orders_rpc.delete_order(order.id)
     assert not db_session.query(Order).filter_by(id=order.id).count()

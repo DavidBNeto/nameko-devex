@@ -30,12 +30,10 @@ def test_get(storage, products):
 
 def test_list(storage, products):
     listed_products = storage.list()
-    assert (
-        products == sorted(list(listed_products), key=lambda x: x['id']))
+    assert (products == sorted(list(listed_products), key=lambda x: x['id']))
 
 
 def test_create(product, redis_client, storage):
-
     storage.create(product)
 
     stored_product = redis_client.hgetall('products:LZ127')
@@ -43,8 +41,7 @@ def test_create(product, redis_client, storage):
     assert product['id'] == stored_product[b'id'].decode('utf-8')
     assert product['title'] == stored_product[b'title'].decode('utf-8')
     assert product['maximum_speed'] == int(stored_product[b'maximum_speed'])
-    assert product['passenger_capacity'] == (
-        int(stored_product[b'passenger_capacity']))
+    assert product['passenger_capacity'] == (int(stored_product[b'passenger_capacity']))
     assert product['in_stock'] == int(stored_product[b'in_stock'])
 
 
@@ -56,9 +53,19 @@ def test_decrement_stock(storage, create_product, redis_client):
     in_stock = storage.decrement_stock(2, 4)
 
     assert 7 == in_stock
-    product_one, product_two, product_three = [
-        redis_client.hgetall('products:{}'.format(id_))
-        for id_ in (1, 2, 3)]
+    product_one, product_two, product_three = [redis_client.hgetall('products:{}'.format(id_)) for id_ in (1, 2, 3)]
     assert b'10' == product_one[b'in_stock']
     assert b'7' == product_two[b'in_stock']
     assert b'12' == product_three[b'in_stock']
+
+
+def test_delete(storage, products, redis_client):
+
+    fields_deleted = storage.delete('LZ130')
+    keys = redis_client.keys()
+
+    assert fields_deleted == 5
+    assert redis_client.hgetall('products:LZ130') == {}
+    assert len(keys) == 2
+    for key in keys:
+        assert b'products:LZ130' != key
